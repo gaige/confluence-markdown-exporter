@@ -50,15 +50,16 @@ class Exporter:
 
         # save all files as .html for now, we will convert them later
         extension = ".html"
+
+        # rudimentary checks here first
+        sanitized_page_title = self.__sanitize_filename(page_title)
         if len(child_ids) > 0:
             document_name = "index" + extension
+            page_location = parents + [sanitized_page_title, document_name]
         else:
-            document_name = page_title + extension
+            document_name = sanitized_page_title + extension
+            page_location = parents + [document_name]
 
-        # make some rudimentary checks, to prevent trivial errors
-        sanitized_filename = self.__sanitize_filename(document_name)
-
-        page_location = parents + [sanitized_filename]
         page_filename = os.path.join(self.__out_dir, *page_location)
 
         page_output_dir = os.path.dirname(page_filename)
@@ -102,7 +103,7 @@ class Exporter:
         for space in ret["results"]:
             space_key = space["key"]
             if skip_spaces and space_key in skip_spaces:
-            	continue
+                continue
             print("Processing space", space_key)
             if space.get("homepage") is None:
                 print("Skipping space: {}, no homepage found!".format(space_key))
@@ -178,7 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-fetch", action="store_true", dest="no_fetch", required=False,
                         default=False, help="This option only runs the markdown conversion")
     parser.add_argument("--skip-space", action="append", dest="skip_spaces", 
-    					help="Skip the spaces (can be multiple)", required=False)
+                        help="Skip the spaces (can be multiple)", required=False)
     args = parser.parse_args()
     
     if not args.no_fetch:
