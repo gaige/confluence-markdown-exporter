@@ -75,7 +75,8 @@ class Exporter:
                 att_title = i["title"]
                 download = i["_links"]["download"]
 
-                att_url = self.__url.rstrip("/") + "/wiki/" + download
+#                att_url = self.__url.rstrip("/") + "/wiki/" + download
+                att_url = self.__url.rstrip("/") + download
                 att_sanitized_name = self.__sanitize_filename(att_title)
                 att_filename = os.path.join(page_output_dir, ATTACHMENT_FOLDER_NAME, att_sanitized_name)
 
@@ -96,10 +97,12 @@ class Exporter:
         for child_id in child_ids:
             self.__dump_page(child_id, parents=parents + [page_title])
     
-    def dump(self):
+    def dump(self, skip_spaces):
         ret = self.__confluence.get_all_spaces(start=0, limit=500, expand='description.plain,homepage')
         for space in ret["results"]:
             space_key = space["key"]
+            if skip_spaces and space_key in skip_spaces:
+            	continue
             print("Processing space", space_key)
             if space.get("homepage") is None:
                 print("Skipping space: {}, no homepage found!".format(space_key))
@@ -174,12 +177,14 @@ if __name__ == "__main__":
                         default=False, help="Skip fetching attachments")
     parser.add_argument("--no-fetch", action="store_true", dest="no_fetch", required=False,
                         default=False, help="This option only runs the markdown conversion")
+    parser.add_argument("--skip-space", action="append", dest="skip_spaces", 
+    					help="Skip the spaces (can be multiple)", required=False)
     args = parser.parse_args()
     
     if not args.no_fetch:
         dumper = Exporter(url=args.url, username=args.username, token=args.token, out_dir=args.out_dir,
                           no_attach=args.no_attach)
-        dumper.dump()
+        dumper.dump(args.skip_spaces)
     
     converter = Converter(out_dir=args.out_dir)
     converter.convert()
